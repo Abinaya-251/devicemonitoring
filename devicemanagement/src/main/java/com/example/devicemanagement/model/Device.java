@@ -1,25 +1,36 @@
 package com.example.devicemanagement.model;
 
+import com.example.devicemanagement.model.enums.DeviceStatus;
+import com.example.devicemanagement.model.enums.DeviceType;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "devices") // This annotation indicates that this class will be stored in a MongoDB collection named "devices"
-@Data // Lombok annotation to generate getters, setters, toString, equals, and hashCode methods
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+@Document(collection = "devices")
+@Data
 public class Device {
 
-    @Id // MongoDB will automatically generate a unique ID for each device
+    @Id
     private String id;
 
-    private String name;
-    private String type;
+    private String deviceName;
+    private DeviceType deviceType;
+
+    private String macAddress;
+
+    @Indexed(unique = true)
     private String ipAddress;
+
+    private String firmwareVersion;
     private String location;
-    private String status;
-
-    public String getId() {
-        return id;
-    }
-    
-
+    private DeviceStatus status;
+    private Instant lastHeartbeat;
+    private Instant registeredAt;
+    private List<String> tags;
+    private Map<String, Object> configuration;
 }

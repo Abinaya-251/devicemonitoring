@@ -2,30 +2,27 @@ package com.example.devicemanagement.dto;
 
 import com.example.devicemanagement.model.enums.DeviceStatus;
 import com.example.devicemanagement.model.enums.DeviceType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 @Data
-public class DeviceRequest {
+@Builder
+public class DeviceResponse {
 
-    @NotBlank(message = "Device name is required")
+    private String id;
     private String deviceName;
-
-    @NotNull(message = "Device type is required")
     private DeviceType deviceType;
-
     private String macAddress;
-
-    @NotBlank(message = "IP address is required")
     private String ipAddress;
-
     private String firmwareVersion;
     private String location;
     private DeviceStatus status;
+    private Instant lastHeartbeat;
+    private Instant registeredAt;
     private List<String> tags;
     private Map<String, Object> configuration;
 }
