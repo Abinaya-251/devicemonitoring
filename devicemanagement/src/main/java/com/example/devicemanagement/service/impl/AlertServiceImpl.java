@@ -11,6 +11,9 @@ import com.example.devicemanagement.repository.AlertRuleRepository;
 import com.example.devicemanagement.service.AlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -29,6 +32,7 @@ public class AlertServiceImpl implements AlertService {
     // ========== ALERT RULES ==========
 
     @Override
+    @CacheEvict(value = "alertRules", allEntries = true)
     public AlertRule createRule(AlertRuleRequest request) {
         AlertRule rule = new AlertRule();
         rule.setRuleName(request.getRuleName());
@@ -46,11 +50,13 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    @Cacheable(value = "alertRules")
     public List<AlertRule> getAllRules() {
         return alertRuleRepository.findAll();
     }
 
     @Override
+    @CacheEvict(value = "alertRules", allEntries = true)
     public AlertRule updateRule(String id, AlertRuleRequest request) {
         AlertRule rule = alertRuleRepository.findById(id)
                 .orElseThrow(() -> new AlertRuleNotFoundException(id));
@@ -68,6 +74,7 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    @CacheEvict(value = "alertRules", allEntries = true)
     public void deleteRule(String id) {
         if (!alertRuleRepository.existsById(id)) {
             throw new AlertRuleNotFoundException(id);
@@ -100,6 +107,10 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "alertStats", allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public Alert acknowledgeAlert(String id, String acknowledgedBy) {
         Alert alert = getAlertById(id);
         alert.setStatus(AlertStatus.ACKNOWLEDGED);
@@ -110,6 +121,10 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "alertStats", allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public Alert resolveAlert(String id) {
         Alert alert = getAlertById(id);
         alert.setStatus(AlertStatus.RESOLVED);
@@ -119,6 +134,7 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    @Cacheable(value = "alertStats")
     public Map<String, Long> getAlertStats() {
         Map<String, Long> stats = new HashMap<>();
         stats.put("total", alertRepository.count());

@@ -12,6 +12,7 @@
 | **Database**       | MongoDB                          | Primary data store for devices, configs, alerts      |
 | **Search & Logs**  | Elasticsearch                    | Full-text search on device logs, telemetry indexing  |
 | **Message Broker** | RabbitMQ                         | Async event-driven communication between services    |
+| **Caching**        | Redis                            | Cache layer for devices, alerts, dashboard data      |
 | **Frontend**       | React + Material-UI              | Real-time dashboard, device management UI            |
 
 ---
@@ -48,16 +49,16 @@
 └──────────┬──────────────────┬───────────────────┬─────────────────────────┘
            │                  │                   │
      ┌─────▼─────┐    ┌──────▼──────┐    ┌───────▼───────┐
-     │  MongoDB   │    │Elasticsearch│    │   RabbitMQ    │
-     │            │    │             │    │               │
-     │ • devices  │    │ • device-   │    │ Exchanges:    │
-     │ • alerts   │    │   logs      │    │ • device.     │
-     │ • configs  │    │ • telemetry │    │   events      │
-     │ • users    │    │ • alerts    │    │ • telemetry.  │
-     │ • rules    │    │             │    │   ingestion   │
-     └────────────┘    └─────────────┘    │ • alert.      │
-                                          │   notifications│
-                                          └───────────────┘
+     │  MongoDB   │    │Elasticsearch│    │   RabbitMQ    │    ┌─────────────┐
+     │            │    │             │    │               │    │    Redis     │
+     │ • devices  │    │ • device-   │    │ Exchanges:    │    │             │
+     │ • alerts   │    │   logs      │    │ • device.     │    │ • devices   │
+     │ • configs  │    │ • telemetry │    │   events      │    │ • device    │
+     │ • users    │    │ • alerts    │    │ • telemetry.  │    │ • dashboard │
+     │ • rules    │    │             │    │   ingestion   │    │ • alertRules│
+     └────────────┘    └─────────────┘    │ • alert.      │    │ • alertStats│
+                                          │   notifications│    │ • deviceStats│
+                                          └───────────────┘    └─────────────┘
 ```
 
 ---
@@ -324,6 +325,38 @@
 
 ---
 
+## Redis — Caching Layer
+
+Redis is used as a distributed cache to reduce database load and improve response times for frequently accessed data.
+
+### Cache Configuration
+
+Configured in `RedisConfig.java` using `Jackson2JsonRedisSerializer` with Java Time module support for proper serialization of `Instant`, `LocalDateTime`, etc.
+
+| Cache Name      | TTL        | Purpose                                      |
+|-----------------|------------|----------------------------------------------|
+| `devices`       | 10 minutes | Cached device list results                   |
+| `device`        | 10 minutes | Individual device lookups                    |
+| `deviceStats`   | 2 minutes  | Device count by status/type/location         |
+| `dashboard`     | 1 minute   | Dashboard summary data                       |
+| `alertRules`    | 5 minutes  | Alert rule definitions                       |
+| `alertStats`    | 2 minutes  | Alert counts by severity/status              |
+
+### Cache Eviction Strategy
+- **`@Cacheable`** — Caches method results (e.g., `getAllRules()`, `getAllDevices()`)
+- **`@CacheEvict`** — Invalidates cache on mutations (create, update, delete)
+- **`@Caching`** — Combines multiple evictions (e.g., acknowledging an alert evicts both `alertStats` and `dashboard`)
+
+### application.properties
+```properties
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+spring.cache.type=redis
+spring.cache.redis.time-to-live=300000
+```
+
+---
+
 ## MongoDB — Collections Overview
 
 | Collection      | Purpose                                  | Key Indexes                    |
@@ -429,6 +462,7 @@ src/main/java/com/example/devicemanagement/
 │   ├── MongoConfig.java
 │   ├── ElasticsearchConfig.java
 │   ├── RabbitMQConfig.java               // Exchanges, queues, bindings
+│   ├── RedisConfig.java                  // Cache manager, serialization, TTLs
 │   └── CorsConfig.java
 ├── controller/
 │   ├── DeviceController.java
@@ -528,6 +562,13 @@ src/main/java/com/example/devicemanagement/
 - [ ] Alert lifecycle management (open → ack → resolve)
 - [ ] Alert event publishing to notification queue
 
+### Phase 4.5 — Redis Caching Layer ✅
+- [x] Redis Docker container setup
+- [x] Redis cache configuration (RedisConfig.java)
+- [x] Jackson2JsonRedisSerializer with Java Time module support
+- [x] Per-cache TTL configuration (devices, alerts, dashboard, etc.)
+- [x] @Cacheable / @CacheEvict / @Caching annotations on services
+
 ### Phase 5 — Log Search & Analytics
 - [ ] Device log model and ES repository
 - [ ] Full-text search API with Elasticsearch queries
@@ -562,6 +603,7 @@ src/main/java/com/example/devicemanagement/
 - MongoDB 6.0+ (running on `localhost:27017`)
 - Elasticsearch 8.x (running on `localhost:9200`)
 - RabbitMQ 3.12+ (running on `localhost:5672`, management UI on `15672`)
+- Redis 7.x (running on `localhost:6379`)
 - Node.js 18+ (for React frontend)
 
 ### Backend
@@ -581,7 +623,7 @@ Frontend runs on `http://localhost:3000`
 
 ### Infrastructure (Docker Compose)
 ```bash
-docker-compose up -d    # Starts MongoDB, Elasticsearch, RabbitMQ
+docker-compose up -d    # Starts MongoDB, Elasticsearch, RabbitMQ, Redis
 ```
 
 ---

@@ -9,6 +9,7 @@ import com.example.devicemanagement.repository.AlertRepository;
 import com.example.devicemanagement.repository.DeviceRepository;
 import com.example.devicemanagement.service.DashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -22,6 +23,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final AlertRepository alertRepository;
 
     @Override
+    @Cacheable(value = "dashboard")
     public DashboardSummaryResponse getSummary() {
         Map<String, Long> devicesByType = new HashMap<>();
         for (DeviceType type : DeviceType.values()) {

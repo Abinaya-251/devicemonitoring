@@ -11,6 +11,9 @@ import com.example.devicemanagement.repository.DeviceRepository;
 import com.example.devicemanagement.service.DeviceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,11 @@ public class DeviceServiceImpl implements DeviceService {
     private final DeviceEventProducer deviceEventProducer;
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "devices", allEntries = true),
+            @CacheEvict(value = "deviceStats", allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public DeviceResponse createDevice(DeviceRequest request) {
         Device device = new Device();
         device.setDeviceName(request.getDeviceName());
@@ -53,6 +61,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Cacheable(value = "devices")
     public List<DeviceResponse> getAllDevices() {
         return repository.findAll().stream()
                 .map(this::toResponse)
@@ -60,6 +69,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Cacheable(value = "device", key = "#id")
     public DeviceResponse getDeviceById(String id) {
         Device device = repository.findById(id)
                 .orElseThrow(() -> new DeviceNotFoundException(id));
@@ -67,6 +77,12 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "device", key = "#id"),
+            @CacheEvict(value = "devices", allEntries = true),
+            @CacheEvict(value = "deviceStats", allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public DeviceResponse updateDevice(String id, DeviceRequest request) {
         Device device = repository.findById(id)
                 .orElseThrow(() -> new DeviceNotFoundException(id));
@@ -92,6 +108,12 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "device", key = "#id"),
+            @CacheEvict(value = "devices", allEntries = true),
+            @CacheEvict(value = "deviceStats", allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public void deleteDevice(String id) {
         Device device = repository.findById(id)
                 .orElseThrow(() -> new DeviceNotFoundException(id));
@@ -103,6 +125,12 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "device", key = "#id"),
+            @CacheEvict(value = "devices", allEntries = true),
+            @CacheEvict(value = "deviceStats", allEntries = true),
+            @CacheEvict(value = "dashboard", allEntries = true)
+    })
     public DeviceResponse updateDeviceStatus(String id, DeviceStatus status) {
         Device device = repository.findById(id)
                 .orElseThrow(() -> new DeviceNotFoundException(id));
@@ -124,6 +152,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Cacheable(value = "deviceStats")
     public Map<String, Long> getDeviceStats() {
         Map<String, Long> stats = new HashMap<>();
 
