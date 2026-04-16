@@ -1,6 +1,6 @@
-# NetPulse — Real-Time Device Monitoring & Analytics Platform
+Real-Time Device Monitoring & Analytics Platform
 
-> A production-grade, cloud-style network device monitoring platform inspired by **NETGEAR Insight**. Built to manage thousands of network devices (routers, switches, access points, firewalls) with real-time telemetry ingestion, intelligent alerting, full-text log search, and a live dashboard.
+> A production-grade, cloud-style network device monitoring platform. Built to manage thousands of network devices (routers, switches, access points, firewalls) with real-time telemetry ingestion, intelligent alerting, full-text log search, and a live dashboard.
 
 ---
 
@@ -320,8 +320,6 @@
 3. **Aggregation:** "Top 10 devices by error count this week"
 4. **Terms filter:** Filter by log level, device type, source
 5. **Histogram:** Log volume over time (for dashboard charts)
-
-**Interview talking point:** "MongoDB stores the live operational data — current device states, active alerts, configurations. Elasticsearch handles the analytical and search workloads — searching through millions of log entries, time-series telemetry aggregations, and powering the dashboard charts. This separation lets each database do what it's best at."
 
 ---
 
