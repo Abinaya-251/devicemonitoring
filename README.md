@@ -300,7 +300,6 @@ Real-Time Device Monitoring & Analytics Platform
 - **Decoupling:** Device Service doesn't need to know about Alert or Log Service
 - **Reliability:** Messages are persisted; no data loss even if a consumer is down
 - **Scalability:** Add more consumers to process telemetry spikes
-- **Interview talking point:** "We chose RabbitMQ over Kafka because our message patterns are request-response and work-queue based, not high-throughput stream processing. RabbitMQ's routing flexibility with topic exchanges fits our event-driven needs perfectly."
 
 ---
 
@@ -623,28 +622,6 @@ Frontend runs on `http://localhost:3000`
 ```bash
 docker-compose up -d    # Starts MongoDB, Elasticsearch, RabbitMQ, Redis
 ```
-
----
-
-## Key Interview Discussion Points
-
-1. **Why MongoDB + Elasticsearch (dual database)?**
-   MongoDB is optimized for document-level CRUD with flexible schemas — perfect for device configs and alert management. Elasticsearch excels at full-text search, time-series aggregation, and analytics across millions of log entries. Using both plays to each database's strength.
-
-2. **Why RabbitMQ for messaging?**
-   RabbitMQ provides reliable message delivery with acknowledgments, dead-letter queues for failed processing, and flexible routing (topic, direct, fanout exchanges). It decouples our services so the Device Service doesn't need to know about alerting or logging.
-
-3. **How does the alert system work?**
-   It's event-driven: telemetry data flows through RabbitMQ → Alert Service evaluates against configurable rules → generates alerts with severity levels → publishes notification events. Cooldown periods prevent alert storms.
-
-4. **How would you scale this?**
-   - Horizontal scaling: Run multiple instances of each service behind a load balancer
-   - Elasticsearch: Sharding and replicas for search performance
-   - RabbitMQ: Multiple consumers for parallel processing of telemetry
-   - MongoDB: Replica sets for high availability
-
-5. **How does this relate to NETGEAR Insight?**
-   This mirrors Insight's core architecture: device registration, real-time monitoring, intelligent alerting, and centralized log management — the fundamental building blocks of any cloud-managed network platform.
 
 ---
 
